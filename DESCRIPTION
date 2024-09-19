@@ -1,0 +1,17 @@
+Package: PelagicMagic
+Title: Assist With Species Distribution Modeling of Marine Birds
+Version: 0.0.0.9000
+Authors@R: 
+    person("Allison", "Patterson", , "allison.patterson@ec.gc.ca", role = c("aut", "cre"))
+    person("Katie", "Studholme", , "katherine.studholme@ec.gc.ca", role = c("aut", "cre"))
+    person("Devin", "de Zwaan", , "devin.dezwaan@ec.gc.ca", role = c("aut", "cre"))
+Description: Tools to assist with species distribution modelling.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+
