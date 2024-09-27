@@ -2,92 +2,106 @@
 % Please edit documentation in R/envir_functions.R
 \name{get_bathymetry}
 \alias{get_bathymetry}
-\title{Function to download bathymetry data}
+\title{Function to download bathymetry data and calculate related layers: slope, coastdist, shelfdist}
 \usage{
 get_bathymetry(
   out_dir = NULL,
   region,
   overwrite = FALSE,
   stride = 1,
-  mask_land = NULL,
-  add_slope = FALSE,
+  vars = c("slope", "coastdist", "shelfdist"),
   neighbors = 8,
   slope_unit = c("degrees", "radians"),
-  add_coastdist = FALSE,
+  land_elev = 0,
+  shelf_elev = -200,
   dist_unit = c("m", "km")
 )
 }
 \arguments{
 \item{out_dir}{File path to the directory where raster will be saved. String.}
 
-\item{region}{Bounding box for region as xmin, ymin, xmax, ymax.}
+\item{region}{Bounding box for region as: xmin, xmax, ymin, ymax.}
 
 \item{overwrite}{Should existing files be overwritten. Logical.}
 
 \item{stride}{Rate at which to sample underlying raster resolution. Integer.}
 
-\item{mask_land}{Value of elevation that will be used to mask out land. Integer. Default is NULL.}
+\item{vars}{List of bathymetry related variables to calculate. Default is c('slope', 'coastdist','shelfdist').}
 
-\item{add_slope}{Should a layer for slope be calculated. Logical.}
+\item{neighbors}{Number of neighbours to use in slope calculation. One of 4 or 8. Default is 8.}
 
-\item{neighbors}{Number of neighbours to use in slope calculation. Either 4 or 8.}
+\item{slope_unit}{Unit for the slope calculation. One of "degrees" or "radians". Default is degrees.}
 
-\item{slope_unit}{Unit for the slope calculation. One of "degrees" or "radians".}
+\item{land_elev}{Value of elevation, in m, that will be used to mask out land when calculating coastdist. Integer. Default is 0}
 
-\item{add_coastdist}{Should a layer for distance to coastline be calculated. Logical.}
+\item{shelf_elev}{Value of elevation, in m, that will be used to calculate distance}
 
-\item{dist_unit}{Unit for the distances One of "m" or "km".}
+\item{dist_unit}{Unit for the distance values One of "m" or "km". Default is m
+when calculating coastdist. Integer. Default is -200 m}
 }
 \value{
-A netcdf file named 'bathymetry.nc' saved to out_dir. If add_slope or
-add_coast are set to TRUE, then additional files named 'slope.nc' and 'coastdist.nc'
-will be saved.
+A netcdf file named 'bathymetry.nc' saved to out_dir. If additional
+variables are included using vars, then additional files named will be saved.
 }
 \description{
-Function to download bathymetry data
+Function to download bathymetry data and calculate related layers: slope, coastdist, shelfdist
 }
 \details{
-This function uses rerddap to download the GEBCO_2020 Grid, which is a
-continuous terrain model for oceans and land at 15 arc-second intervals (0.004 deg).
+This function uses rerddap to download the GEBCO_2020 elevation grid, which is a
+continuous terrain model for oceans and land at 15 arc-second intervals (0.004 deg)
+with elevation values in meters. The stride argument is passed to rerddap if
+you want to downsample the resolution of the raster data before downloading.
+For example, a stride of 2 will only acquire every second grid cell and a stride
+of 10 will acquire every 10th grid cell.
 
-Stride is passed to rerddap if you want to downsample the resolution of the
-raster data before downloading. For example, a stride of 2 will only acquire
-every second grid cell and a stride of 10 will acquire every 10th grid cell.
+Vars is a list of common layers that can be derived from a bathymetry raster.
+Current options include slope, distance from coastline (coastdist), and distance from shelf break (shlefdist).
 
-If mask_land is not null, all elevation values greater than mask_land will be converted to NA.
+If vars includes slope, then slope is calculated using the terra::terrain() function.
+The arguments neighbors and slope_unit are arguments passed to terra::terrain()
+when calculating slope from a bathymetry layer. See ?terra::terrain for details.
+
+If vars includes coastdist, then distance to coast is calculated the terra::costDist() function.
+The arguments land_elev and dist_unit are used when calculating coastdist.
+All elevation values greater than land_elev will be converted to NA and coastdist
+is calculated as distance to the closest NA value using terra::costDist(). The
+distance raster will be returned in dist_unit (m or km).
+
+If vars includes shelfdist, then distance to shelf break is calculated using
+the terra::costDist() function.The arguments shelf_elev and dist_unit are used
+when calculating shelfdist. All elevation values greater than shelf_elev (i.e.
+regions inshore of the shelf break) will be assigned negative distance values in dist_unit.
+All elevation values less than shelf_elev (i.e. regions offshore of the shelf
+break) will be assigned positive distance values in dist_unit. If shelf_elev is
+outside of the range of elevation values in the bathymetry layer an error will be returned.
+}
+\note{
+When calculating shelfdist, distances close to the edge of the raster layer may
+not reflect the true distance from the shelf break if the bathymetry layer is cropped.
 }
 \examples{
-# Just get bathymetry
+# Gets all variables
 get_bathymetry(out_dir = 'tmp',
-              region = c(-68, 44, -63, 46),
+              region = c(-68, -63, 44, 46),
               overwrite = FALSE,
               stride = 1,
-              mask_land = 0,
-              add_slope = FALSE,
+              vars = c('slope','coastdist','shelfdist'),
               neighbors = 8,
               slope_unit = c('degrees','radians'),
-              add_coastdist = FALSE,
-              dist_unit = c('m','km'))
+              land_elev = 0,
+              dist_unit = 'km',
+              shelf_elev = -50)
 r <- terra::rast('tmp/bathymetry.nc')
-terra::plot(r)
-
-# Get bathymetry and calculate slope and distance from coast
-get_bathymetry(out_dir = 'tmp',
-              region = c(-68, 44, -63, 46),
-              overwrite = FALSE,
-              stride = 1,
-              mask_land = 0,
-              add_slope = TRUE,
-              neighbors = 8,
-              slope_unit = 'degrees',
-              add_coastdist = TRUE,
-              dist_unit = 'km')
+terra::plot(r, main = terra::longnames(r))
 r <- terra::rast('tmp/slope.nc')
 terra::plot(r, main = terra::longnames(r))
 r <- terra::rast('tmp/coastdist.nc')
 terra::plot(r, main = terra::longnames(r))
+r <- terra::rast('tmp/shelfdist.nc')
+terra::plot(r, main = terra::longnames(r))
+
 unlink('tmp', recursive = TRUE)
 }
 \seealso{
-\code{\link[=get_slope]{get_slope()}}, \code{\link[=get_coastdist]{get_coastdist()}}
+\code{\link[terra:terrain]{terra::terrain()}}, \code{\link[terra:costDist]{terra::costDist()}}, \code{\link[rerddap:griddap]{rerddap::griddap()}}
 }
