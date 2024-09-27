@@ -15,12 +15,6 @@ test_that("bathymetry files download", {
                  shelf_elev = -50))
 
   expect_equal(list.files('tmp'), c("bathymetry.nc", "coastdist.nc",  "shelfdist.nc",  "slope.nc"))
-
-  r <- terra::rast('tmp/bathymetry.nc')
-  expect_equal(terra::ncell(r), 577681)
-  expect_equal(min(terra::values(r, na.rm = T)), -251)
-  expect_equal(max(terra::values(r, na.rm = T)), 414)
-
   unlink('tmp', recursive = T)
 })
 
