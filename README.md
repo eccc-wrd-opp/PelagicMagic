@@ -11,12 +11,22 @@ birds.
 
 ## Installation
 
-You can install the development version of PelagicMagic from
+You can install the main version of PelagicMagic from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("allison-patterson/PelagicMagic")
+```
+
+## Development Version
+
+You can install the development version of PelagicMagic from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("allison-patterson/PelagicMagic@dev")
 ```
 
 ## Example
