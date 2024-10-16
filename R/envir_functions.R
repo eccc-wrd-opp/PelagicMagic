@@ -319,7 +319,7 @@ get_shelfdist <- function(bath_file,
 #'                          plot = TRUE,
 #'                          overwrite = TRUE)
 #'
-#' unlink('tmp')
+#' unlink('tmp', recursive = TRUE)
 #'
 calc_overwaterdist_point <- function(landmask, coords, out_dir, dist_unit = c('m','km'), plot = TRUE, overwrite = FALSE) {
 

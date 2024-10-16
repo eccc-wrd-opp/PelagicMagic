@@ -57,6 +57,6 @@ calc_overwaterdist_point(landmask = lm,
                          plot = TRUE,
                          overwrite = TRUE)
 
-unlink('tmp')
+unlink('tmp', recursive = TRUE)
 
 }
