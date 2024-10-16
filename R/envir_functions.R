@@ -102,17 +102,17 @@ get_bathymetry <- function(out_dir = NULL,
     }
   }
 
-    if (file.exists(bath_file) == FALSE | overwrite == TRUE) {
-      b <- rerddap::griddap(rerddap::info('GEBCO_2020'),
-                            latitude = region[c(3,4)],
-                            longitude = region[c(1,2)],
-                            stride = stride,
-                            store = rerddap::disk(path = out_dir,
-                                                  overwrite = TRUE)
-      )
-      file.rename(b$summary$filename, paste0(dirname(b$summary$filename), '/bathymetry.nc'))
-      message(paste('Saving:', bath_file))
-    } else message(paste('Skipping:', bath_file, 'exists in destination'))
+  if (file.exists(bath_file) == FALSE | overwrite == TRUE) {
+    b <- rerddap::griddap(rerddap::info('GEBCO_2020'),
+                          latitude = region[c(3,4)],
+                          longitude = region[c(1,2)],
+                          stride = stride,
+                          store = rerddap::disk(path = out_dir,
+                                                overwrite = TRUE)
+    )
+    file.rename(b$summary$filename, paste0(dirname(b$summary$filename), '/bathymetry.nc'))
+    message(paste('Saving:', bath_file))
+  } else message(paste('Skipping:', bath_file, 'exists in destination'))
 
   if ('slope' %in% vars) {
     get_slope(bath_file, out_dir, neighbors = neighbors, slope_unit = slope_unit, overwrite = overwrite)
@@ -155,7 +155,7 @@ get_slope <- function(bath_file,
                       neighbors = 8,
                       slope_unit = c('degrees','radians'),
                       overwrite = FALSE
-                      ) {
+) {
 
   if (file.exists(bath_file) == FALSE) stop(paste(bath_file), ' not found. Add bathymetry to vars argument to download bathymetry data.')
   if (neighbors %in% c(4,8) == FALSE) stop('neighbours must be one of 4 or 8')
@@ -197,7 +197,7 @@ get_coastdist <- function(bath_file,
                           land_elev = 0,
                           dist_unit = c('m','km'),
                           overwrite = FALSE
-                          ) {
+) {
   if (file.exists(bath_file) == FALSE) stop(paste(bath_file), ' not found. Add bathymetry to vars argument to download bathymetry data.')
 
   b <- terra::rast(bath_file)
@@ -278,3 +278,90 @@ get_shelfdist <- function(bath_file,
                     overwrite = T)
   } else (message(paste(shelf_file, 'file already exists, skipping download')))
 }
+
+
+# overwaterdist ---------------------------------------------------------
+
+#' Function to calculate overwater distance from a single location or set of locations
+#'
+#' @param landmask A SpatRaster where land is NA and water == 1.
+#' @param coords Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
+#' location name used for saving each distance raster, x and y are the location coordinates in the same units as landmask.
+#' @param out_dir File path to the directory where slope raster will be saved. String.
+#' @param dist_unit Unit for the distances One of "m" or "km".
+#' @param plot Should the distance rasters be plotted. Logical.
+#' @param overwrite Should existing files be overwritten. Logical.
+#'
+#' @return A separate ncdf file with overwater distance calculate for each record in coords. Output saved to out_dir.
+#' @export
+#'
+#' @examples
+#'
+#' # Get bathymetry
+#' get_bathymetry(out_dir = 'tmp',
+#'                region = c(-68, -63, 44, 46),
+#'                overwrite = FALSE,
+#'                stride = 1,
+#'                vars = NULL)
+#'
+#' r <- terra::rast('tmp/bathymetry.nc')
+#' lm <- terra::ifel(r >=0, NA, 1)
+#'
+#' my_cols <- data.frame(location = c('loc1', 'loc2'),
+#'                       x = c(-66.718, -66.387),
+#'                       y = c(44.702, 44.240)
+#' )
+#'
+#' calc_overwaterdist_point(landmask = lm,
+#'                          coords = my_cols,
+#'                          out_dir = 'tmp/colony_dist',
+#'                          dist_unit = c('km'),
+#'                          plot = TRUE,
+#'                          overwrite = TRUE)
+#'
+#' unlink('tmp')
+#'
+calc_overwaterdist_point <- function(landmask, coords, out_dir, dist_unit = c('m','km'), plot = TRUE, overwrite = FALSE) {
+
+  if (class(landmask)[1] != 'SpatRaster') stop('landmask must be a SpatRaster', call. = FALSE)
+  if (!('x' %in% names(coords)) | !('y' %in% names(coords)) | !('location' %in% names(coords))) stop('coords must include columns named: location, x, and y', call. = FALSE)
+  if (dir.exists(out_dir) == FALSE) dir.create(out_dir, recursive = TRUE)
+
+  coords$idx <- terra::cellFromXY(landmask, xy = coords[,c('x','y')])
+
+  for (i in 1:nrow(coords)) {
+
+    out_file <- paste0(out_dir,'/',coords$location[i], '.nc')
+    if (file.exists(out_file) == FALSE | overwrite == TRUE) {
+
+      m <- landmask
+      terra::values(m)[coords$idx[i]] <- -1
+      d <- terra::costDist(m, target = -1, overwrite = TRUE)
+      terra::varnames(d) <- 'distance'
+      terra::longnames(d) <- 'Distance (m)'
+      terra::units(d) <- 'm'
+
+      if (dist_unit[1] == 'km') {
+        d <- d/1000
+        terra::longnames(d) <- 'Distance (km)'
+        terra::units(d) <- 'km'
+      }
+
+      if (max(terra::values(d), na.rm = T)[1] == 0) warning(paste(coords$location[i], 'did not touch water, all raster values 0'), call. = FALSE)
+
+      if (plot == TRUE) {
+        terra::plot(d, main = coords$location[i])
+        terra::points(coords[i, c('x','y')], pch = 19, col = 'red')
+      }
+
+      terra::writeCDF(d,
+                      out_file,
+                      overwrite = overwrite,
+                      varname = coords$location[i],
+                      longname = ifelse(dist_unit[1] == 'km', 'Overwater distance (km)', 'Overwater distance (m)'),                      ,
+                      unit = ifelse(dist_unit[1] == 'km', 'km', 'm')
+                      )
+    } else print(paste('Skipping:', coords$location[i]))
+  }
+}
+
