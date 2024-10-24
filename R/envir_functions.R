@@ -14,7 +14,7 @@
 #' @param land_elev Value of elevation, in m, that will be used to mask out land when calculating coastdist. Integer. Default is 0
 #' @param shelf_elev Value of elevation, in m, that will be used to calculate shelf distance. Integer. Default is -200 m
 #' @param dist_unit Unit for the distance values One of "m" or "km". Default is m
-#' @param maxiter	The maximum number of iterations when calculating coastdist and shelfdist.
+#' @param maxiter The maximum number of iterations when calculating coastdist and shelfdist.
 #' Increase this number if you get the warning that costDistance did not converge.
 #'
 #' @details
@@ -91,7 +91,7 @@ get_bathymetry <- function(out_dir = NULL,
                            land_elev = 0,
                            shelf_elev = -200,
                            dist_unit = c('m','km'),
-                           maxiter = 500
+                           maxiter = 50
 ) {
 
   bath_file <- paste0(out_dir,'/bathymetry.nc')
@@ -200,7 +200,7 @@ get_coastdist <- function(bath_file,
                           land_elev = 0,
                           dist_unit = c('m','km'),
                           overwrite = FALSE,
-                          maxiter = 500
+                          maxiter = 50
 ) {
   if (file.exists(bath_file) == FALSE) stop(paste(bath_file), ' not found. Add bathymetry to vars argument to download bathymetry data.')
 
@@ -252,7 +252,7 @@ get_shelfdist <- function(bath_file,
                           shelf_elev = -200,
                           dist_unit = c('m','km'),
                           overwrite = FALSE,
-                          maxiter = 500
+                          maxiter = 50
 ) {
 
   if (file.exists(bath_file) == FALSE) stop(paste(bath_file), ' not found. Add bathymetry to vars argument to download bathymetry data.')
