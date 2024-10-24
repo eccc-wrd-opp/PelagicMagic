@@ -15,7 +15,7 @@ get_bathymetry(
   land_elev = 0,
   shelf_elev = -200,
   dist_unit = c("m", "km"),
-  maxiter = 500
+  maxiter = 50
 )
 }
 \arguments{
