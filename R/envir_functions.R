@@ -12,16 +12,17 @@
 #' @param neighbors Number of neighbours to use in slope calculation. One of 4 or 8. Default is 8.
 #' @param slope_unit Unit for the slope calculation. One of "degrees" or "radians". Default is degrees.
 #' @param land_elev Value of elevation, in m, that will be used to mask out land when calculating coastdist. Integer. Default is 0
-#' @param shelf_elev Value of elevation, in m, that will be used to calculate distance
+#' @param shelf_elev Value of elevation, in m, that will be used to calculate shelf distance. Integer. Default is -200 m
 #' @param dist_unit Unit for the distance values One of "m" or "km". Default is m
-#' when calculating coastdist. Integer. Default is -200 m
+#' @param maxiter The maximum number of iterations when calculating coastdist and shelfdist.
+#' Increase this number if you get the warning that costDistance did not converge.
 #'
 #' @details
 #'
 #' This function uses rerddap to download the GEBCO_2020 elevation grid, which is a
 #' continuous terrain model for oceans and land at 15 arc-second intervals (0.004 deg)
 #' with elevation values in meters. The stride argument is passed to rerddap if
-#' you want to downsample the resolution of the raster data before downloading.
+#' you want to down sample the resolution of the raster data before downloading.
 #' For example, a stride of 2 will only acquire every second grid cell and a stride
 #' of 10 will acquire every 10th grid cell.
 #'
@@ -89,7 +90,8 @@ get_bathymetry <- function(out_dir = NULL,
                            slope_unit = c('degrees','radians'),
                            land_elev = 0,
                            shelf_elev = -200,
-                           dist_unit = c('m','km')
+                           dist_unit = c('m','km'),
+                           maxiter = 50
 ) {
 
   bath_file <- paste0(out_dir,'/bathymetry.nc')
@@ -183,6 +185,7 @@ get_slope <- function(bath_file,
 #' @param land_elev Value of elevation that will be used to mask out land. Integer. Default is 0
 #' @param dist_unit Unit for the distances One of "m" or "km".
 #' @param overwrite Should existing files be overwritten. Logical.
+#' @param maxiter The maximum number of iterations when calculating coastdist. Increase this number if you get the warning that costDistance did not converge
 #'
 #' @details
 #' This function is a wrapper for terra::costDist(). This is an internal function
@@ -196,7 +199,8 @@ get_coastdist <- function(bath_file,
                           out_dir,
                           land_elev = 0,
                           dist_unit = c('m','km'),
-                          overwrite = FALSE
+                          overwrite = FALSE,
+                          maxiter = 50
 ) {
   if (file.exists(bath_file) == FALSE) stop(paste(bath_file), ' not found. Add bathymetry to vars argument to download bathymetry data.')
 
@@ -211,7 +215,7 @@ get_coastdist <- function(bath_file,
     count_na <- sum(is.na(terra::values(b, na.rm = F)))
     if (sum(count_na) == 0) stop('Land values must be NA for get_coastdist(). Use land_elev argument to set land elevation.')
     r <- terra::ifel(is.na(b), 0, 1)
-    d <- terra::costDist(r, target = 0)
+    d <- terra::costDist(r, target = 0, overwrite = TRUE, maxiter = maxiter)
     if (dist_unit[1] == 'km') d <- d/1000
     d <- terra::ifel(d == 0, NA, d)
     terra::longnames(d) <- 'distance from coast (km)'
@@ -220,7 +224,7 @@ get_coastdist <- function(bath_file,
                     unit = dist_unit[1],
                     varname = 'coastdist',
                     longname = paste0('distance from coast (',dist_unit[1],')'),
-                    overwrite = T)
+                    overwrite = TRUE)
   } else (message(paste(coast_file, 'file already exists, skipping download')))
 }
 
@@ -233,6 +237,7 @@ get_coastdist <- function(bath_file,
 #' @param land_elev Value of elevation that will be used to mask out land. Integer. Default is 0
 #' @param dist_unit Unit for the distances One of "m" or "km".
 #' @param overwrite Should existing files be overwritten. Logical.
+#' @param maxiter The maximum number of iterations when calculating shelfdist. Increase this number if you get the warning that costDistance did not converge
 #'
 #' @details
 #' This function is a wrapper for terra::costDist(). This is an internal function
@@ -246,7 +251,8 @@ get_shelfdist <- function(bath_file,
                           out_dir,
                           shelf_elev = -200,
                           dist_unit = c('m','km'),
-                          overwrite = FALSE
+                          overwrite = FALSE,
+                          maxiter = 50
 ) {
 
   if (file.exists(bath_file) == FALSE) stop(paste(bath_file), ' not found. Add bathymetry to vars argument to download bathymetry data.')
@@ -257,17 +263,16 @@ get_shelfdist <- function(bath_file,
   if (shelf_elev < b_range[1]) stop(paste0('shelf_elev [',shelf_elev,' m] is below minimum bathymetry [',b_range[1],' m]'))
   if (shelf_elev > b_range[2]) stop(paste0('shelf_elev [',shelf_elev,' m] is above maximum bathymetry [',b_range[1],' m]'))
 
-
   shelf_file <- paste0(out_dir,'/shelfdist.nc')
 
   if (file.exists(shelf_file) == FALSE | overwrite == TRUE) {
 
     rn <- terra::ifel(b < shelf_elev, 0, 1)
-    inshore <- terra::costDist(rn, target = 0)
+    inshore <- terra::costDist(rn, target = 0, overwrite = TRUE, maxiter = maxiter)
     if (dist_unit[1] == 'km') inshore <- inshore/1000
     inshore <- -inshore
     rn <- terra::ifel(b > shelf_elev, 0, 1)
-    offshore <- terra::costDist(rn, target = 0)
+    offshore <- terra::costDist(rn, target = 0, overwrite = TRUE, maxiter = maxiter)
     if (dist_unit[1] == 'km') offshore <- offshore/1000
     d <- inshore + offshore
     names(d) <- 'shelfdist'
@@ -275,7 +280,7 @@ get_shelfdist <- function(bath_file,
                     unit = dist_unit[1],
                     varname = 'shelfdist',
                     longname = paste0('Distance from shelf break [', shelf_elev,' m] (',dist_unit[1],')'),
-                    overwrite = T)
+                    overwrite = TRUE)
   } else (message(paste(shelf_file, 'file already exists, skipping download')))
 }
 
