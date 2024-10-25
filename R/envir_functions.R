@@ -285,9 +285,9 @@ get_shelfdist <- function(bath_file,
 }
 
 
-# overwaterdist ---------------------------------------------------------
+# get_colonydist ---------------------------------------------------------
 
-#' Function to calculate overwater distance from a single location or set of locations
+#' Function to calculate overwater distance from a colony (single point location or set of point locations)
 #'
 #' @param landmask A SpatRaster where land is NA and water == 1.
 #' @param coords Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
@@ -317,7 +317,7 @@ get_shelfdist <- function(bath_file,
 #'                       y = c(44.702, 44.240)
 #' )
 #'
-#' calc_overwaterdist_point(landmask = lm,
+#' get_colonydist(landmask = lm,
 #'                          coords = my_cols,
 #'                          out_dir = 'tmp/colony_dist',
 #'                          dist_unit = c('km'),
@@ -326,7 +326,7 @@ get_shelfdist <- function(bath_file,
 #'
 #' unlink('tmp', recursive = TRUE)
 #'
-calc_overwaterdist_point <- function(landmask, coords, out_dir, dist_unit = c('m','km'), plot = TRUE, overwrite = FALSE) {
+get_colonydist <- function(landmask, coords, out_dir, dist_unit = c('m','km'), plot = TRUE, overwrite = FALSE) {
 
   if (class(landmask)[1] != 'SpatRaster') stop('landmask must be a SpatRaster', call. = FALSE)
   if (!('x' %in% names(coords)) | !('y' %in% names(coords)) | !('location' %in% names(coords))) stop('coords must include columns named: location, x, and y', call. = FALSE)
