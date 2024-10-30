@@ -17,3 +17,6 @@ Imports:
     rerddap,
     reticulate,
     terra (>= 1.7.83)
+Depends: 
+    R (>= 2.10)
+LazyData: true
