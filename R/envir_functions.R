@@ -55,7 +55,7 @@
 #' @return A netcdf file named 'bathymetry.nc' saved to out_dir. If additional
 #' variables are included using vars, then additional files named will be saved.
 #'
-#'@export
+#' @export
 #'
 #' @seealso [terra::terrain()], [terra::costDist()], [rerddap::griddap()]
 #'
