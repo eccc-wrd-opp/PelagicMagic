@@ -30,19 +30,20 @@ Create a Python vertual environment with copernicusmarine toolbox installed
 }
 \details{
 This function uses reticulate to create a Python virtual environment
-and install the copernicusmarine toolbox. This toolbox can be used to download
-oceanographic data from copernicus marine service.
+and install the copernicusmarine toolbox. This environment can then be used to download
+oceanographic data from Copernicus Marine Service.
 
 If the function is run including the user name and password then login details
 will be saved to the virtual environment on creation.
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
-cm_env <- 'tmp/cms_env'
+# not run
+if (FALSE) {
+cm_env <- './tmp/cms_env'
 make_cms_envir(my_env = cm_env, force = FALSE)
 reticulate::use_virtualenv(paste0(my_env,'/'), required = TRUE)
 cm <- reticulate::import("copernicusmarine")
-cm$login()
-\dontshow{\}) # examplesIf}
+}
+
 }
