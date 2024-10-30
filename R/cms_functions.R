@@ -142,7 +142,7 @@ get_cms_data <- function(
     of <- paste0(out_dir,'/',vv$frequency[i],'/',vv$variable[i],'/',vv$dataset_name[i],
                  '-',vv$frequency[i],'-',vv$variable[i],
                  '-', gsub('-','',as.character(as.Date(max(c(date_min, vv$min_date[i]), na.rm = T)))),
-                 '-', gsub('-','',as.character(as.Date(min(c(date_max, vv$mmax_date[i]), na.rm = T))))
+                 '-', gsub('-','',as.character(as.Date(min(c(date_max, vv$max_date[i]), na.rm = T))))
     )
     on <- paste0(vv$dataset_name[i],
                  '-',vv$frequency[i],'-',vv$variable[i],
