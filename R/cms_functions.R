@@ -133,9 +133,12 @@ get_cms_data <- function(
   if (!(prod %in% cms_table$prod)) stop(paste(prod, 'not in the included datasets, check cms_table'))
 
   vv <- cms_table[cms_table$prod == prod & cms_table$variable == var & cms_table$frequency == freq,]
-  vv$max_date[is.na(vv$max_date)] <- Sys.Date() + 14
-  vv <- vv[vv$max_date >=date_min,]
-  vv <- vv[vv$min_date <=date_max,]
+
+  if (freq != 'static') {
+    vv$max_date[is.na(vv$max_date)] <- Sys.Date() + 14
+    vv <- vv[vv$max_date >=date_min,]
+    vv <- vv[vv$min_date <=date_max,]
+  }
 
   if (nrow(vv) == 0) stop('No datasets matched requrested criteria for prod, var, and freq. Check cms_table')
 
@@ -150,6 +153,7 @@ get_cms_data <- function(
     if (file.exists(of) == FALSE | overwrite == T) {
       cm$subset(
         dataset_id=vv$dataset_id[i],
+        dataset_part = if (freq != 'static') NULL else vv$variable[i],
         variables=list(vv$variable[i]),
         minimum_longitude=region[1],
         maximum_longitude=region[2],
@@ -161,7 +165,7 @@ get_cms_data <- function(
         maximum_depth=depth_max,
         output_filename = on,
         output_directory = paste0(out_dir,'/',vv$frequency[i],'/',vv$variable[i]),
-        service = 'arco-geo-series',
+        service = if (freq != 'static') 'arco-geo-series' else 'static-arco',
         force_download = TRUE,
         overwrite_output_data = TRUE
       )
