@@ -141,7 +141,7 @@ get_cms_data <- function(
 
   for (i in 1:nrow(vv)) {
     of <- paste0(out_dir,'/',vv$frequency[i],'/',vv$variable[i],'/',vv$dataset_name[i],
-                 '-',vv$frequency[i],'-',vv$variable[i]
+                 '-',vv$frequency[i],'-',vv$variable[i],".nc"
     )
     on <- paste0(vv$dataset_name[i],
                  '-',vv$frequency[i],'-',vv$variable[i]
