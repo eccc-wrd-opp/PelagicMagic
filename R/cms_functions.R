@@ -3,7 +3,7 @@
 
 # Create a python environment with the copernicusmarine toolbox installed
 
-#' Create a Python vertual environment with copernicusmarine toolbox installed
+#' Create a Python virtual environment with copernicusmarine toolbox installed
 #'
 #' @param my_env The name of, or path to, a Python virtual environment. If this
 #' name contains any slashes, the name will be interpreted as a path; if the name
@@ -11,11 +11,9 @@
 #' When NULL, the virtual environment as specified by the RETICULATE_PYTHON_ENV
 #' environment variable will be used instead. To refer to a virtual environment
 #' in the current working directory, you can prefix the path with ⁠./<name>⁠.
+#' @param version Python version to use. String. Default is '3.11'.
 #' @param user User name for copernicus marine service. String.
 #' @param password Password for copernicus marine service. String.
-#' @param force Force recreating the environment specified by envname, even if
-#' it already exists. If TRUE, the pre-existing environment is first deleted and
-#' then recreated. Otherwise, if FALSE (the default), the path to the existing environment is returned.
 #'
 #' @details This function uses reticulate to create a Python virtual environment
 #' and install the copernicusmarine toolbox. This environment can then be used to download
@@ -32,18 +30,16 @@
 #' # not run
 #' if (FALSE) {
 #' cm_env <- './tmp/cms_env'
-#' make_cms_envir(my_env = cm_env, force = FALSE)
+#' make_cms_envir(my_env = cm_env)
 #' reticulate::use_virtualenv(paste0(my_env,'/'), required = TRUE)
 #' cm <- reticulate::import("copernicusmarine")
 #' }
 #'
-make_cms_envir <- function(my_env, force = FALSE, user = NULL, password = NULL) {
+make_cms_envir <- function(my_env, version = '3.11', user = NULL, password = NULL) {
   if (reticulate::virtualenv_exists(my_env) == F) {
-    reticulate::install_python(version = "3.10:latest", list = FALSE, force = TRUE, optimized = TRUE)
-    reticulate::virtualenv_create(envname = my_env,packages = c("numpy", 'copernicusmarine'),
-                                  ignore_installed = FALSE,
-                                  force = FALSE)
-    reticulate::virtualenv_install(envname = my_env, packages = c("numpy", "copernicusmarine"))
+    reticulate::install_python(version = version, list = FALSE, optimized = TRUE)
+    reticulate::virtualenv_create(envname = my_env, ignore_installed = TRUE)
+    reticulate::virtualenv_install(envname = my_env, packages = c("copernicusmarine"))
 
   } else message(paste('Python environment already exists at:', my_env))
 
@@ -53,7 +49,6 @@ make_cms_envir <- function(my_env, force = FALSE, user = NULL, password = NULL) 
     cm$login(user, password, skip_if_user_logged_in = T)
   }
 }
-
 
 # get_cms_data ------------------------------------------------------------
 
@@ -69,6 +64,7 @@ make_cms_envir <- function(my_env, force = FALSE, user = NULL, password = NULL) 
 #' @param date_max The latest date to include, formatted as a date class.
 #' @param depth_min For datasets with a depth component, the minimum depth value to include. Default is 0.
 #' @param depth_max For datasets with a depth component, the maximum depth value to include. Default is 0.
+#' @param overwrite TRUE/FALSE. Should existing files be overwritten? Default is FALSE.
 #'
 #' @details  This is a wrapper function to use the subset function of the Copernicus
 #' Marine Toolbox directly from R with reticulate. CMS provides access to many useful
@@ -121,36 +117,37 @@ get_cms_data <- function(
     my_env,
     out_dir,
     var = 'thetao',
-    prod = 'cmems_mod_glo_phy',
+    prod = 'cmems_mod_glo_phy_hindcast',
     freq = c('monthly', 'daily', 'static'),
     region = c(-68, -63, 44, 46),
-    date_min = Sys.Date(),
+    date_min = Sys.Date() - 1,
     date_max = Sys.Date(),
     depth_min = 0,
-    depth_max = 0
+    depth_max = 0,
+    overwrite = FALSE
 ) {
 
   reticulate::use_virtualenv(paste0(my_env,'/'), required = F)
   cm <- reticulate::import("copernicusmarine")
-  #utils::data('cms_table', envir = environment())
-  vv <- cms_table[cms_table$variable == var & cms_table$frequency == freq,]
+
+  if (!(prod %in% cms_table$prod)) stop(paste(prod, 'not in the included datasets, check cms_table'))
+
+  vv <- cms_table[cms_table$prod == prod & cms_table$variable == var & cms_table$frequency == freq,]
   vv$max_date[is.na(vv$max_date)] <- Sys.Date() + 14
   vv <- vv[vv$max_date >=date_min,]
   vv <- vv[vv$min_date <=date_max,]
 
+  if (nrow(vv) == 0) stop('No datasets matched requrested criteria for prod, var, and freq. Check cms_table')
+
   for (i in 1:nrow(vv)) {
     of <- paste0(out_dir,'/',vv$frequency[i],'/',vv$variable[i],'/',vv$dataset_name[i],
-                 '-',vv$frequency[i],'-',vv$variable[i],
-                 '-', gsub('-','',as.character(as.Date(max(c(date_min, vv$min_date[i]), na.rm = T)))),
-                 '-', gsub('-','',as.character(as.Date(min(c(date_max, vv$max_date[i]), na.rm = T))))
+                 '-',vv$frequency[i],'-',vv$variable[i]
     )
     on <- paste0(vv$dataset_name[i],
-                 '-',vv$frequency[i],'-',vv$variable[i],
-                 '-', gsub('-','',as.character(as.Date(max(c(date_min, vv$min_date[i]), na.rm = T)))),
-                 '-', gsub('-','',as.character(as.Date(min(c(date_max, vv$max_date[i]), na.rm = T))))
+                 '-',vv$frequency[i],'-',vv$variable[i]
     )
 
-    if (file.exists(of) == FALSE) {
+    if (file.exists(of) == FALSE | overwrite == T) {
       cm$subset(
         dataset_id=vv$dataset_id[i],
         variables=list(vv$variable[i]),
@@ -166,7 +163,7 @@ get_cms_data <- function(
         output_directory = paste0(out_dir,'/',vv$frequency[i],'/',vv$variable[i]),
         service = 'arco-geo-series',
         force_download = TRUE,
-        overwrite_output_data = FALSE
+        overwrite_output_data = TRUE
       )
 
     } else print(paste('Skipping:', of))

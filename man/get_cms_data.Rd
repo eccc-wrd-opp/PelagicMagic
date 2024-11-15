@@ -8,13 +8,14 @@ get_cms_data(
   my_env,
   out_dir,
   var = "thetao",
-  prod = "cmems_mod_glo_phy",
+  prod = "cmems_mod_glo_phy_hindcast",
   freq = c("monthly", "daily", "static"),
   region = c(-68, -63, 44, 46),
-  date_min = Sys.Date(),
+  date_min = Sys.Date() - 1,
   date_max = Sys.Date(),
   depth_min = 0,
-  depth_max = 0
+  depth_max = 0,
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ get_cms_data(
 \item{depth_min}{For datasets with a depth component, the minimum depth value to include. Default is 0.}
 
 \item{depth_max}{For datasets with a depth component, the maximum depth value to include. Default is 0.}
+
+\item{overwrite}{TRUE/FALSE. Should existing files be overwritten? Default is FALSE.}
 }
 \value{
 Netcdf file(s) saved to out_dir.

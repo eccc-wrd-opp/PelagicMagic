@@ -2,9 +2,9 @@
 % Please edit documentation in R/cms_functions.R
 \name{make_cms_envir}
 \alias{make_cms_envir}
-\title{Create a Python vertual environment with copernicusmarine toolbox installed}
+\title{Create a Python virtual environment with copernicusmarine toolbox installed}
 \usage{
-make_cms_envir(my_env, force = FALSE, user = NULL, password = NULL)
+make_cms_envir(my_env, version = "3.11", user = NULL, password = NULL)
 }
 \arguments{
 \item{my_env}{The name of, or path to, a Python virtual environment. If this
@@ -14,9 +14,7 @@ When NULL, the virtual environment as specified by the RETICULATE_PYTHON_ENV
 environment variable will be used instead. To refer to a virtual environment
 in the current working directory, you can prefix the path with ⁠./\if{html}{\out{<name>}}⁠.}
 
-\item{force}{Force recreating the environment specified by envname, even if
-it already exists. If TRUE, the pre-existing environment is first deleted and
-then recreated. Otherwise, if FALSE (the default), the path to the existing environment is returned.}
+\item{version}{Python version to use. String. Default is '3.11'.}
 
 \item{user}{User name for copernicus marine service. String.}
 
@@ -26,7 +24,7 @@ then recreated. Otherwise, if FALSE (the default), the path to the existing envi
 Creates a python virtual environment with the copernicusmarine toolbox installed on the path specified by my_env
 }
 \description{
-Create a Python vertual environment with copernicusmarine toolbox installed
+Create a Python virtual environment with copernicusmarine toolbox installed
 }
 \details{
 This function uses reticulate to create a Python virtual environment
@@ -41,7 +39,7 @@ will be saved to the virtual environment on creation.
 # not run
 if (FALSE) {
 cm_env <- './tmp/cms_env'
-make_cms_envir(my_env = cm_env, force = FALSE)
+make_cms_envir(my_env = cm_env)
 reticulate::use_virtualenv(paste0(my_env,'/'), required = TRUE)
 cm <- reticulate::import("copernicusmarine")
 }
