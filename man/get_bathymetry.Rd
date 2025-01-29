@@ -14,7 +14,8 @@ get_bathymetry(
   slope_unit = c("degrees", "radians"),
   land_elev = 0,
   shelf_elev = -200,
-  dist_unit = c("m", "km")
+  dist_unit = c("m", "km"),
+  maxiter = 50
 )
 }
 \arguments{
@@ -34,10 +35,12 @@ get_bathymetry(
 
 \item{land_elev}{Value of elevation, in m, that will be used to mask out land when calculating coastdist. Integer. Default is 0}
 
-\item{shelf_elev}{Value of elevation, in m, that will be used to calculate distance}
+\item{shelf_elev}{Value of elevation, in m, that will be used to calculate shelf distance. Integer. Default is -200 m}
 
-\item{dist_unit}{Unit for the distance values One of "m" or "km". Default is m
-when calculating coastdist. Integer. Default is -200 m}
+\item{dist_unit}{Unit for the distance values One of "m" or "km". Default is m}
+
+\item{maxiter}{The maximum number of iterations when calculating coastdist and shelfdist.
+Increase this number if you get the warning that costDistance did not converge.}
 }
 \value{
 A netcdf file named 'bathymetry.nc' saved to out_dir. If additional
@@ -50,7 +53,7 @@ Function to download bathymetry data and calculate related layers: slope, coastd
 This function uses rerddap to download the GEBCO_2020 elevation grid, which is a
 continuous terrain model for oceans and land at 15 arc-second intervals (0.004 deg)
 with elevation values in meters. The stride argument is passed to rerddap if
-you want to downsample the resolution of the raster data before downloading.
+you want to down sample the resolution of the raster data before downloading.
 For example, a stride of 2 will only acquire every second grid cell and a stride
 of 10 will acquire every 10th grid cell.
 
