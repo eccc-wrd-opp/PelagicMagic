@@ -35,10 +35,11 @@
 #' cm <- reticulate::import("copernicusmarine")
 #' }
 #'
-make_cms_envir <- function(my_env, version = '3.11', user = NULL, password = NULL) {
+make_cms_envir <- function(my_env, version = '3.11.9', user = NULL, password = NULL) {
   if (reticulate::virtualenv_exists(my_env) == F) {
-    reticulate::install_python(version = version, list = FALSE, optimized = TRUE)
-    reticulate::virtualenv_create(envname = my_env, ignore_installed = TRUE)
+    tt <- reticulate::install_python(version = version, list = FALSE, optimized = TRUE, force = FALSE)
+    Sys.setenv('RETICULATE_PYTHON_FALLBACK'=tt)
+    reticulate::virtualenv_create(envname = my_env, ignore_installed = FALSE)
     reticulate::virtualenv_install(envname = my_env, packages = c("copernicusmarine"))
 
   } else message(paste('Python environment already exists at:', my_env))
@@ -46,7 +47,7 @@ make_cms_envir <- function(my_env, version = '3.11', user = NULL, password = NUL
   if (!is.null(user) & !is.null(password)) {
     reticulate::use_virtualenv(paste0(my_env,'/'), required = TRUE)
     cm <- reticulate::import("copernicusmarine")
-    cm$login(user, password, skip_if_user_logged_in = T)
+    cm$login(user, password)
   }
 }
 
@@ -107,8 +108,8 @@ make_cms_envir <- function(my_env, version = '3.11', user = NULL, password = NUL
 #'    region = c(-68, -63, 44, 46),
 #'    date_min = Sys.Date() + -31,
 #'    date_max = Sys.Date() + 7,
-#'    depth_min = 0,
-#'    depth_max = 0
+#'    depth_min = 0.49402499198913574,
+#'    depth_max = 0.49402499198913574
 #'    )
 #'}
 
@@ -165,9 +166,9 @@ get_cms_data <- function(
         maximum_depth=depth_max,
         output_filename = on,
         output_directory = paste0(out_dir,'/',vv$frequency[i],'/',vv$variable[i]),
-        service = if (freq != 'static') 'arco-geo-series' else 'static-arco',
-        force_download = TRUE,
-        overwrite_output_data = TRUE
+        service = if (freq != 'static') 'arco-geo-series' else 'static-arco'
+        # force_download = TRUE,
+        # overwrite_output_data = TRUE
       )
 
     } else print(paste('Skipping:', of))

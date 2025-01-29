@@ -4,7 +4,7 @@
 \alias{make_cms_envir}
 \title{Create a Python virtual environment with copernicusmarine toolbox installed}
 \usage{
-make_cms_envir(my_env, version = "3.11", user = NULL, password = NULL)
+make_cms_envir(my_env, version = "3.11.9", user = NULL, password = NULL)
 }
 \arguments{
 \item{my_env}{The name of, or path to, a Python virtual environment. If this
