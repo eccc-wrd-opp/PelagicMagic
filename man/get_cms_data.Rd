@@ -83,8 +83,8 @@ get_cms_data(
    region = c(-68, -63, 44, 46),
    date_min = Sys.Date() + -31,
    date_max = Sys.Date() + 7,
-   depth_min = 0,
-   depth_max = 0
+   depth_min = 0.49402499198913574,
+   depth_max = 0.49402499198913574
    )
 }
 }
