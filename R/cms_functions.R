@@ -87,7 +87,6 @@ make_cms_envir <- function(my_env, version = '3.11.9', user = NULL, password = N
 #' done using the get_cms_env() function. This environment could be saved outside
 #' of an R project and called by any project that requires CMS data.
 #'
-#'
 #' @return Netcdf file(s) saved to out_dir.
 #' @export
 #'
