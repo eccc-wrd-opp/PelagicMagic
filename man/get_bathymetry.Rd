@@ -41,7 +41,7 @@ get_bathymetry(
 \value{
 A netcdf file named 'bathymetry.nc' saved to out_dir. If add_slope or
 add_coast are set to TRUE, then additional files named 'slope.nc' and 'coastdist.nc'
-will be saved.
+will be saved. Test git
 }
 \description{
 Function to download bathymetry data
