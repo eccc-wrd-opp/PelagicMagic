@@ -105,7 +105,7 @@ get_bathymetry <- function(out_dir = NULL,
   }
 
   if (file.exists(bath_file) == FALSE | overwrite == TRUE) {
-    b <- rerddap::griddap(rerddap::info('GEBCO_2020'),
+    b <- rerddap::griddap(rerddap::info('gebco2021', url = 'https://erddap.ifremer.fr/erddap'),
                           latitude = region[c(3,4)],
                           longitude = region[c(1,2)],
                           stride = stride,
@@ -294,9 +294,13 @@ get_shelfdist <- function(bath_file,
 #'
 #' @param landmask A SpatRaster object. Land is converted to NA and water to 1 within function.
 #' @param coords Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
+#' @param search_dist Optional search distance (in m) to look for water locations if a location is located on land.
 #' location name used for saving each distance raster, x and y are the location coordinates in the same units as landmask.
 #'
 #' @returns An adjusted colony coordinate data frame to be used in get_colonydist.
+#'
+#' @noRd
+#' @seealso [get_colonydist()]]
 #'
 #' @examples
 #'
@@ -307,73 +311,59 @@ get_shelfdist <- function(bath_file,
 #'                stride = 1,
 #'                vars = NULL)
 #'
-#' landmask <- terra::rast('tmp/bathymetry.nc')
+#' m <- terra::rast('tmp/bathymetry.nc')
 #'
 #' my_cols <- data.frame(location = c('loc1', 'loc2'),
 #'                       x = c(-66.718, -66.387),
 #'                       y = c(44.702, 44.240)
 #' )
 #'
-#' check_colony(landmask = landmask,
-#'              coords = my_cols)
+#' get_colonydist(landmask = m,
+#'                coords = my_cols,
+#'                out_dir = 'tmp/colony_dist',
+#'                dist_unit = c('km'),
+#'                search_dist = NULL,
+#'                plot = TRUE,
+#'                overwrite = TRUE)
 #'
-check_colony <- function(landmask, coords) {
 
-  # Make sure landmask is in a binary style (land = NA and water = 1)
-  lm <- terra::ifel(landmask >=0, NA, 1)
+check_colony <- function(landmask, coords, search_dist = NULL) {
+
+  # # Make sure landmask is in a binary style (land = NA and water = 1)
+  # landmask <- terra::ifel(landmask >=0, NA, 1)
 
   # Check if the extracted value is NA
-  if(is.na(extract(lm, coords[,c('x','y')])$elevation)) {
+  if (is.na(terra::extract(landmask, coords[,c('x','y')], ID = FALSE)[,1])) {
 
     # If NA, find the closest 1 value
     # Create a mask for all cells with value 1
-    mask_1 <- lm == 1
+    mask_1 <- landmask == 1
 
-    # Reduce the radius to speed up the process by limiting to within 1km of point.
-    radius_meters <- 5000  # For example, 5000 meters
+    #convert loc to SpatVector
+    ml <- terra::vect(coords, geom=c("x", "y"), crs="epsg:4326")
 
-    # Convert meters to degrees (approximate)
-    meters_per_degree_lat <- 111000
-    meters_per_degree_lon <- abs(111000 * cos(pi * coords$x / 180))
+    if (!is.null(search_dist)) {
+      # Crop to within search_dist for speed
+      loc_buff <- terra::buffer(ml, search_dist)
+      mask_1 <- terra::crop(mask_1, loc_buff)
+    }
 
-    # Convert the radius to degrees
-    radius_deg_lat <- radius_meters / meters_per_degree_lat
-    radius_deg_lon <- radius_meters / meters_per_degree_lon
+    # Select closest overwater location
+    distances <- terra::distance(mask_1, ml)
+    distances <- terra::mask(distances, mask_1)
+    names(distances) <- 'distance'
 
-    xmin = coords[1,1] - radius_deg_lon
-    xmax = coords[1,1] + radius_deg_lon
-    ymin = coords[1,2] - radius_deg_lat
-    ymax = coords[1,2] + radius_deg_lat
-
-    extent_raster <- terra::ext(xmin,xmax,ymin,ymax)
-
-    # Crop the raster to the region around the point
-    cropped_raster <- crop(mask_1, extent_raster)
-
-    # Create a spatial object for the raster cells with value 1
-    points_1 <- as.points(cropped_raster)
-
-    geom_points <- as.data.frame(geom(points_1))
-
-    # Create a spatial object for the input point
-    input_point <- SpatialPoints(coords[,c('x','y')])
-
-    # Calculate the distance between the input point and all points with value 1
-    distances <- spDistsN1(as.matrix(cbind(geom_points$x,geom_points$y)), input_point, longlat = TRUE)  # Using longitude/latitude
-
-    # Find the index of the closest point
-    closest_point_index <- which.min(distances)
-
-    # Get the coordinates of the closest point
-    closest_point <- geom_points %>% slice(closest_point_index) %>%
-      dplyr::select(x,y)
-
-    # Create new colony dataframe
-    coords_new <- closest_point %>%
-      mutate(location = coords$location,
-             idx = coords$idx)
+    coords_new <- data.frame(
+      location = coords[,1],
+      terra::crds(distances, na.rm = T),
+      terra::values(distances, na.rm = T)
+    ) |>
+      dplyr::slice_min(distance) |>
+      dplyr::select(names(coords)) |>
+      data.frame()
 
     # Output the new coordinates
+    print(paste0('Shifting ', coords[,1], ' to be over water. New location at: ', round(coords_new[,2],3), ' , ',round(coords_new[,3],3)))
     coords_new
 
   } else {
@@ -387,11 +377,15 @@ check_colony <- function(landmask, coords) {
 
 #' Function to calculate overwater distance from a colony (single point location or set of point locations)
 #'
-#' @param landmask A SpatRaster object.
+#' @param landmask A SpatRaster object. Raster cells that are inaccessible (land) should have NA values. All other cells
+#' should have values corresponding to the cost of travelling over that location. In most cases this will be values of
+#' 1 (water), however if you want to account for species avoiding certain areas (like ice) cells can have weights to
+#' increase the cost of travel. See example for converting bathymetry to NA/1 raster before running the function.
 #' @param coords Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
 #' location name used for saving each distance raster, x and y are the location coordinates in the same units as landmask.
 #' @param out_dir File path to the directory where slope raster will be saved. String.
 #' @param dist_unit Unit for the distances One of "m" or "km".
+#' @param search_dist Optional search distance (in m) to look for water locations if a location is located on land.
 #' @param plot Should the distance rasters be plotted. Logical.
 #' @param overwrite Should existing files be overwritten. Logical.
 #'
@@ -407,29 +401,34 @@ check_colony <- function(landmask, coords) {
 #'                stride = 1,
 #'                vars = NULL)
 #'
-#' landmask <- terra::rast('tmp/bathymetry.nc')
+#' m <- terra::rast('tmp/bathymetry.nc')
+#' m <- terra::ifel(m >=0, NA, 1)
 #'
 #' my_cols <- data.frame(location = c('loc1', 'loc2'),
 #'                       x = c(-66.718, -66.387),
 #'                       y = c(44.702, 44.240)
 #' )
 #'
-#' get_colonydist(landmask = landmask,
+#' get_colonydist(landmask = m,
 #'                coords = my_cols,
 #'                out_dir = 'tmp/colony_dist',
 #'                dist_unit = c('km'),
+#'                search_dist = NULL,
 #'                plot = TRUE,
 #'                overwrite = TRUE)
 #'
 #' unlink('tmp', recursive = TRUE)
 #'
-get_colonydist <- function(landmask, coords, out_dir, dist_unit = c('m','km'), plot = TRUE, overwrite = FALSE) {
+#'
+#'
+get_colonydist <- function(landmask, coords, out_dir, dist_unit = c('m','km'),
+                           search_dist = NULL, plot = TRUE, overwrite = FALSE) {
 
   if (class(landmask)[1] != 'SpatRaster') stop('landmask must be a SpatRaster', call. = FALSE)
   if (!('x' %in% names(coords)) | !('y' %in% names(coords)) | !('location' %in% names(coords))) stop('coords must include columns named: location, x, and y', call. = FALSE)
   if (dir.exists(out_dir) == FALSE) dir.create(out_dir, recursive = TRUE)
 
-  coords$idx <- terra::cellFromXY(landmask, xy = coords[,c('x','y')])
+  #coords$idx <- terra::cellFromXY(landmask, xy = coords[,c('x','y')])
 
   for (i in 1:nrow(coords)) {
 
@@ -437,13 +436,14 @@ get_colonydist <- function(landmask, coords, out_dir, dist_unit = c('m','km'), p
     if (file.exists(out_file) == FALSE | overwrite == TRUE) {
 
       # Check and then adjust (if necessary) the location of the colony
-      coords_adj <- check_colony(landmask = landmask, coords = coords[i,])
+      coords_adj <- check_colony(landmask = landmask, coords = coords[i,], search_dist = search_dist)
+      coords_adj$idx <- terra::cellFromXY(landmask, xy = coords_adj[,c('x','y')])
 
-      # Convert land to NA and water to 1
-      if(max(values(landmask)) > 1) {lm <- terra::ifel(landmask >=0, NA, 1)
-            } else(lm <- landmask)
+      # # Convert land to NA and water to 1
+      # if(max(terra::values(landmask)) > 1) {lm <- terra::ifel(landmask >=0, NA, 1)
+      #       } else(lm <- landmask)
 
-      m <- lm
+      m <- landmask
       terra::values(m)[coords_adj$idx] <- -1
       d <- terra::costDist(m, target = -1, overwrite = TRUE)
       terra::varnames(d) <- 'distance'
