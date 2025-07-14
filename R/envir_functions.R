@@ -296,9 +296,9 @@ get_shelfdist <- function(bath_file,
 #' @param coords Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
 #' location name used for saving each distance raster, x and y are the location coordinates in the same units as landmask.
 #'
-#'@return An adjusted colony coordinate data frame to be used in get_colonydist.
+#' @returns An adjusted colony coordinate data frame to be used in get_colonydist.
 #'
-#'#' @examples
+#' @examples
 #'
 #' # Get bathymetry
 #' get_bathymetry(out_dir = 'tmp',

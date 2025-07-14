@@ -32,7 +32,7 @@
 #' if (FALSE) {
 #' cm_env <- './tmp/cms_env'
 #' make_cms_envir(my_env = cm_env)
-#' reticulate::use_virtualenv(paste0(my_env,'/'), required = TRUE)
+#' reticulate::use_virtualenv(paste0(cm_env,'/'), required = TRUE)
 #' cm <- reticulate::import("copernicusmarine")
 #' }
 #'

@@ -14,7 +14,7 @@ get_colonydist(
 )
 }
 \arguments{
-\item{landmask}{A SpatRaster where land is NA and water == 1.}
+\item{landmask}{A SpatRaster object.}
 
 \item{coords}{Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
 location name used for saving each distance raster, x and y are the location coordinates in the same units as landmask.}
@@ -42,20 +42,19 @@ get_bathymetry(out_dir = 'tmp',
                stride = 1,
                vars = NULL)
 
-r <- terra::rast('tmp/bathymetry.nc')
-lm <- terra::ifel(r >=0, NA, 1)
+landmask <- terra::rast('tmp/bathymetry.nc')
 
 my_cols <- data.frame(location = c('loc1', 'loc2'),
                       x = c(-66.718, -66.387),
                       y = c(44.702, 44.240)
 )
 
-get_colonydist(landmask = lm,
-                         coords = my_cols,
-                         out_dir = 'tmp/colony_dist',
-                         dist_unit = c('km'),
-                         plot = TRUE,
-                         overwrite = TRUE)
+get_colonydist(landmask = landmask,
+               coords = my_cols,
+               out_dir = 'tmp/colony_dist',
+               dist_unit = c('km'),
+               plot = TRUE,
+               overwrite = TRUE)
 
 unlink('tmp', recursive = TRUE)
 
