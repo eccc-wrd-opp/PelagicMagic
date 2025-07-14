@@ -9,12 +9,16 @@ get_colonydist(
   coords,
   out_dir,
   dist_unit = c("m", "km"),
+  search_dist = NULL,
   plot = TRUE,
   overwrite = FALSE
 )
 }
 \arguments{
-\item{landmask}{A SpatRaster object.}
+\item{landmask}{A SpatRaster object. Raster cells that are inaccessible (land) should have NA values. All other cells
+should have values corresponding to the cost of travelling over that location. In most cases this will be values of
+1 (water), however if you want to account for species avoiding certain areas (like ice) cells can have weights to
+increase the cost of travel. See example for converting bathymetry to NA/1 raster before running the function.}
 
 \item{coords}{Data frame with columns labelled 'location', 'x', and 'y'. Where location is the
 location name used for saving each distance raster, x and y are the location coordinates in the same units as landmask.}
@@ -22,6 +26,8 @@ location name used for saving each distance raster, x and y are the location coo
 \item{out_dir}{File path to the directory where slope raster will be saved. String.}
 
 \item{dist_unit}{Unit for the distances One of "m" or "km".}
+
+\item{search_dist}{Optional search distance (in m) to look for water locations if a location is located on land.}
 
 \item{plot}{Should the distance rasters be plotted. Logical.}
 
@@ -42,20 +48,24 @@ get_bathymetry(out_dir = 'tmp',
                stride = 1,
                vars = NULL)
 
-landmask <- terra::rast('tmp/bathymetry.nc')
+m <- terra::rast('tmp/bathymetry.nc')
+m <- terra::ifel(m >=0, NA, 1)
 
 my_cols <- data.frame(location = c('loc1', 'loc2'),
                       x = c(-66.718, -66.387),
                       y = c(44.702, 44.240)
 )
 
-get_colonydist(landmask = landmask,
+get_colonydist(landmask = m,
                coords = my_cols,
                out_dir = 'tmp/colony_dist',
                dist_unit = c('km'),
+               search_dist = NULL,
                plot = TRUE,
                overwrite = TRUE)
 
 unlink('tmp', recursive = TRUE)
+
+
 
 }
