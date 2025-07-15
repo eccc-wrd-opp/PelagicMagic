@@ -90,7 +90,7 @@ analysis_error,daily,sst_glo_sst_l4_nrt_observations_010_001,METOFFICE-GLO-SST-L
 analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_024_c3s,C3S-GLO-SST-L4-REP-OBS-SST,c3s_glo_sst_rep,1982-01-01,2024-12-31
 analysed_st,daily,sst_glo_sst_l4_rep_observations_010_024_c3s,C3S-GLO-SST-L4-REP-OBS-SST,c3s_glo_sst_rep,1982-01-01,2024-12-31
 sea_ice_fraction,daily,sst_glo_sst_l4_rep_observations_010_024_c3s,C3S-GLO-SST-L4-REP-OBS-SST,c3s_glo_sst_rep,1982-01-01,2024-12-31
-analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_024_esacci_c3s,ESACCI-GLO-SST-L4-REP-OBS-SST,esacci-glo-sst-rep,1981-09-01,2016-12-31
+analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_024_esacci,ESACCI-GLO-SST-L4-REP-OBS-SST,esacci-glo-sst-rep,1981-09-01,2016-12-31
 sea_ice_fraction,daily,sst_glo_sst_l4_rep_observations_010_024_esacci,ESACCI-GLO-SST-L4-REP-OBS-SST,esacci-glo-sst-rep,1981-09-01,2016-12-31
 analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_011,METOFFICE-GLO-SST-L4-REP-OBS-SST,metoffice_glo_sst_rep,1981-10-01,2022-05-31
 sea_ice_fraction,daily,sst_glo_sst_l4_rep_observations_010_011,METOFFICE-GLO-SST-L4-REP-OBS-SST,metoffice_glo_sst_rep,1981-10-01,2022-05-31
