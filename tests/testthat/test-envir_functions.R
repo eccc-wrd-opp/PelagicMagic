@@ -33,3 +33,8 @@ test_that("bathymetry files have not changed", {
 
   unlink('tmp', recursive = T)
 })
+
+test_that("pick_aea_projection() works", {
+  expect_equal(pick_aea_projection(quakes, latcol = "lat", longcol = "long"),
+               "+proj=aea +lat_1=-33.945 +lat_2=-15.365 +lat_0=-24.655 +lon_0=176.9 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
+})

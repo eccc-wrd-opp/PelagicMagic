@@ -472,3 +472,73 @@ get_colonydist <- function(landmask, coords, out_dir, dist_unit = c('m','km'),
   }
 }
 
+#' Pick a custom Albers Equal Area projection suitable for a given dataset
+#'
+#' @param dat either an \pkg{sf} object or a dataframe with latitudes in
+#'    \code{latcol} and longitudes in \code{longcol}.
+#' @param latcol,longcol  names of \code{dat} columns containing latitudes
+#'    and longitudes, respectively. Ignored if \code{dat} is an \pkg{sf} object.
+#' @param type type of formatting for the returned projection string.
+#'
+#'@details Figures out what standard parallels to use for Albers Equal Area projection.
+#' As per: \href{https://pro.arcgis.com/en/pro-app/latest/help/mapping/properties/albers.htm}{https://pro.arcgis.com/en/pro-app/latest/help/mapping/properties/albers.htm}
+#' See also: \href{https://proj.org/en/6.2/operations/projections/aea.html}{https://proj.org/en/6.2/operations/projections/aea.html}
+#'
+#' Parameters for Albers Equal Area projection:\cr\cr
+#' lat_1: southern standard parallel - 1/6 of latitude range north of the southern limit\cr
+#' lat_2: northern standard parallel - 1/6 of latitude range south of the northern limit\cr
+#' lat_0: central parallel - midpoint of latitude range\cr
+#' lon_0: central meridian - mean of longitude range (or maybe median?)\cr
+#'
+#' @returns The projection description string in the chosen format.
+#' @export
+#'
+#' @examples
+#'
+#' pick_aea_projection(quakes, latcol = "lat", longcol = "long")
+#'
+#'
+#' library(sf)
+#' quakes_sf <- st_as_sf(quakes, coords = c("long", "lat"), crs = 4326)
+#' pick_aea_projection(quakes_sf)
+#'
+#'
+pick_aea_projection <- function(dat,
+                                latcol = "lat",
+                                longcol = "lon",
+                                type = c("PROJ4", "WKT2")) {
+
+  type <- match.arg(type)
+
+  if (inherits(dat, "sf")){
+    longs <- sf::st_coordinates(dat)[, "X"]
+    lats <- sf::st_coordinates(dat)[, "Y"]
+  } else if (inherits(dat, "data.frame")) {
+    longs <- dat[, longcol]
+    lats <- dat[, latcol]
+  } else
+    stop("pick_aea_projection: dat must be a dataframe or an sf object.")
+
+  y_range <- abs(range(lats)[1] - range(lats)[2])
+  lat_1 <- min(lats) + y_range/6
+  lat_2 <- max(lats) - y_range/6
+  lat_0 <- mean(range(lats))
+  lon_0 <- mean(range(longs))
+
+  # Create projection object
+  prjstring <-  sprintf(
+    "+proj=aea +lat_1=%g +lat_2=%g +lat_0=%g +lon_0=%g +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",
+    lat_1,
+    lat_2,
+    lat_0,
+    lon_0
+  )
+
+  # Return projection in chosen format.
+  if( type == "PROJ4") {
+    prjstring
+  } else {
+    sf::st_crs(prjstring)$wkt
+  }
+}
+
