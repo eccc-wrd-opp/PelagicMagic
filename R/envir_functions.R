@@ -105,7 +105,7 @@ get_bathymetry <- function(out_dir = NULL,
   }
 
   if (file.exists(bath_file) == FALSE | overwrite == TRUE) {
-    b <- rerddap::griddap(rerddap::info('gebco2021', url = 'https://erddap.ifremer.fr/erddap'),
+    b <- rerddap::griddap(rerddap::info('GEBCO_2020'),
                           latitude = region[c(3,4)],
                           longitude = region[c(1,2)],
                           stride = stride,
