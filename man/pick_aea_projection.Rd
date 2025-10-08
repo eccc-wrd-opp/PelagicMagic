@@ -41,9 +41,7 @@ lon_0: central meridian - mean of longitude range (or maybe median?)\cr
 
 pick_aea_projection(quakes, latcol = "lat", longcol = "long")
 
-
-library(sf)
-quakes_sf <- st_as_sf(quakes, coords = c("long", "lat"), crs = 4326)
+quakes_sf <- sf::st_as_sf(quakes, coords = c("long", "lat"), crs = 4326)
 pick_aea_projection(quakes_sf)
 
 
