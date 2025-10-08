@@ -2,7 +2,7 @@
 
 
 test_that("bathymetry files download", {
-
+  unlink('tmp', recursive = T, force = T)
   suppressMessages(get_bathymetry(out_dir = 'tmp',
                  region = c(-68, -63, 44, 46),
                  overwrite = FALSE,
@@ -15,7 +15,7 @@ test_that("bathymetry files download", {
                  shelf_elev = -50))
 
   expect_equal(list.files('tmp'), c("bathymetry.nc", "coastdist.nc",  "shelfdist.nc",  "slope.nc"))
-  unlink('tmp', recursive = T)
+  unlink('tmp', recursive = T, force = T)
 })
 
 test_that("bathymetry files have not changed", {
@@ -31,7 +31,7 @@ test_that("bathymetry files have not changed", {
   expect_equal(min(terra::values(r, na.rm = T)), -251)
   expect_equal(max(terra::values(r, na.rm = T)), 414)
 
-  unlink('tmp', recursive = T)
+  unlink('tmp', recursive = T, force = T)
 })
 
 test_that("pick_aea_projection() works", {
