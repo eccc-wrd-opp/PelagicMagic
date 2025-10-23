@@ -84,3 +84,14 @@ T,daily,cmems_mod_glo_ltml_hindcast,cmems_mod_glo_bgc_my_0.083deg-lmtl-Fphy_PT1D
 U,daily,cmems_mod_glo_ltml_hindcast,cmems_mod_glo_bgc_my_0.083deg-lmtl-Fphy_PT1D-i,cmems_mod_glo_lmtl,1/1/1998,
 V,daily,cmems_mod_glo_ltml_hindcast,cmems_mod_glo_bgc_my_0.083deg-lmtl-Fphy_PT1D-i,cmems_mod_glo_lmtl,1/1/1998,
 pelagic_layer_depth,daily,cmems_mod_glo_ltml_hindcast,cmems_mod_glo_bgc_my_0.083deg-lmtl-Fphy_PT1D-i,cmems_mod_glo_lmtl,1/1/1998,
+analysed_sst,daily,sst_glo_sst_l4_nrt_observations_010_001,METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2,metoffice_glo_sst_nrt,7/1/2023,
+sea_ice_fraction,daily,sst_glo_sst_l4_nrt_observations_010_001,METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2,metoffice_glo_sst_nrt,7/1/2023,
+analysis_error,daily,sst_glo_sst_l4_nrt_observations_010_001,METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2,metoffice_glo_sst_nrt,7/1/2023,
+analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_024_c3s,C3S-GLO-SST-L4-REP-OBS-SST,c3s_glo_sst_rep,1/1/1982,12/31/2024
+analysed_st,daily,sst_glo_sst_l4_rep_observations_010_024_c3s,C3S-GLO-SST-L4-REP-OBS-SST,c3s_glo_sst_rep,1/1/1982,12/31/2024
+sea_ice_fraction,daily,sst_glo_sst_l4_rep_observations_010_024_c3s,C3S-GLO-SST-L4-REP-OBS-SST,c3s_glo_sst_rep,1/1/1982,12/31/2024
+analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_024_esacci,ESACCI-GLO-SST-L4-REP-OBS-SST,esacci-glo-sst-rep,9/1/1981,12/31/2016
+sea_ice_fraction,daily,sst_glo_sst_l4_rep_observations_010_024_esacci,ESACCI-GLO-SST-L4-REP-OBS-SST,esacci-glo-sst-rep,9/1/1981,12/31/2016
+analysed_sst,daily,sst_glo_sst_l4_rep_observations_010_011,METOFFICE-GLO-SST-L4-REP-OBS-SST,metoffice_glo_sst_rep,10/1/1981,5/31/2022
+sea_ice_fraction,daily,sst_glo_sst_l4_rep_observations_010_011,METOFFICE-GLO-SST-L4-REP-OBS-SST,metoffice_glo_sst_rep,10/1/1981,5/31/2022
+analysis_error,daily,sst_glo_sst_l4_rep_observations_010_011,METOFFICE-GLO-SST-L4-REP-OBS-SST,metoffice_glo_sst_rep,10/1/1981,5/31/2022
