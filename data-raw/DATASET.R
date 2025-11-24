@@ -6,3 +6,8 @@ cms_table$max_date <- as.Date(cms_table$max_date, format = c('%Y-%m-%d'))
 
 usethis::use_data(cms_table, overwrite = TRUE)
 usethis::use_data(cms_table, overwrite = TRUE, internal = TRUE)
+
+
+coei <- readRDS('data-raw/coei.RDS')
+usethis::use_data(coei, overwrite = TRUE)
+usethis::use_data(coei, overwrite = TRUE, internal = TRUE)
