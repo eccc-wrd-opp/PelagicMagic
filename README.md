@@ -16,7 +16,7 @@ You can install the main version of PelagicMagic from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("ecc-wrd-opp/PelagicMagic")
+devtools::install_github("eccc-wrd-opp/PelagicMagic")
 ```
 
 ## Development Version
@@ -26,7 +26,7 @@ You can install the development version of PelagicMagic from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("ecc-wrd-opp/PelagicMagic@dev")
+devtools::install_github("eccc-wrd-opp/PelagicMagic@dev")
 ```
 
 
