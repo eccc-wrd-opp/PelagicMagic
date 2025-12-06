@@ -170,8 +170,9 @@ get_ud_spatstat <- function(data,
   my_ppp <- spatstat.geom::ppp(x = cc[,1],
                                y = cc[,2],
                                window=my_win)
-  dd <- spatstat.explore::density.ppp(my_ppp, sigma = h, positive=FALSE)
+  dd <- spatstat.explore::density.ppp(my_ppp, sigma = h, positive=TRUE)
   dd <- terra::rast(dd)
+  dd <- dd/sum(terra::global(dd, sum, na.rm = T))
   terra::crs(dd) <- terra::crs(data)
   names(dd) <- 'ud'
   dd
@@ -265,7 +266,6 @@ erase_poly <- function(x, y) {sf::st_difference(x, sf::st_union(sf::st_combine(y
 #' @param sum_stat Statistic for summarizing distribution across survey events, one of 'max', 'mean', or 'median'.
 #' @param lev List of breakpoints for summarizing the raster distribution into polygons. Values below first level will be dropped.
 #' @param buffer_points Distance to buffer points when creating study area polygon if regions argument is NULL.
-#' @param area_unit Unit of measurement for area calculations, one of 'km' or 'm'.
 #' @param donuts Logical. Should higher level polygons be erased from lower level polygons to create donuts.
 #' @param summaries Logical. Should summaries of bird observations within each polygon be returned.
 #' @param output Should the function return summary polygons, summary rasters or all weighted utlization rasters, one of 'polygons', 'summary_rast', or 'all_rast'.
@@ -279,12 +279,10 @@ erase_poly <- function(x, y) {sf::st_difference(x, sf::st_union(sf::st_combine(y
 #' observations according to the breakpoints in lev. This creates a smoothed polygon
 #' representing areas with weighted utlization distribution values within each class.
 #' Polygons can be converted to donuts with higher levels of expected distribution
-#' removed from lower level polygons. Summaries are provided for the size of the polygons, and the
-#' mean and max counts observed within polygons and the number of surveys conducted of that area.
+#' removed from lower level polygons. Summaries are provided for the area of the polygons (area_km2), the
+#' mean (mean_cnt) and max counts (max_cnt) observed, and the number of survey periods with birds observed (num_occ).
 #'
-#'
-#'
-#' @return An sf POLYGONS object showing hotspots
+#' @return An sf POLYGONS object showing hotspots or a spatRaster
 #' @export
 #'
 #' @examples
@@ -323,7 +321,6 @@ erase_poly <- function(x, y) {sf::st_difference(x, sf::st_union(sf::st_combine(y
 #'   sum_stat = c('max','mean','median')[1],
 #'   lev = c(1, 10, 100, 1000, 10000),
 #'   buffer_points = 10000,
-#'   area_unit = c('km','m')[1],
 #'   donuts = T,
 #'   summaries = T
 #' )
@@ -340,10 +337,9 @@ get_hotspots <- function(
     sum_stat = c('max','mean','median')[1],
     lev = c(1, 10, 100, 1000, 10000),
     buffer_points = 10000,
-    area_unit = c('km','m')[1],
     donuts = T,
     summaries = T,
-    output = c('polygons','summary_rast','all_rast')[1]
+    output = c('polygons','raster')[1]
 ){
 
   if (!('date' %in% names(obs))) stop('obs must include a column named date with class Date or POSIXct', call. = F)
@@ -351,9 +347,7 @@ get_hotspots <- function(
   if (class(obs)[1] != "sf") stop('obs must be an sf object', call. = F)
   if (class(coast)[1] != "sf") stop('coast must be an sf object', call. = F)
   if (!(time_group %in% c('%Y', '%m', '%d'))) stop('time_group must be one of %Y, %m, %d', call. = F)
-  if (!(area_unit %in% c('km', 'm'))) stop('area_unit must be one of km, m', call. = F)
   if (!(sum_stat %in% c('max','mean','median'))) stop('sum_stat must be one of max, mean, median', call. = F)
-
 
   # create regions if missing
   if (is.null(regions)) {
@@ -363,6 +357,12 @@ get_hotspots <- function(
       sf::st_as_sfc() |>
       sf::st_as_sf()
   }
+
+  idx <- which(lengths(sf::st_intersects(regions, obs))>0)
+
+  if (length(idx) <1) stop('observations do not intersect with regions, check inputs', call. = F)
+  regions <- regions[which(lengths(sf::st_intersects(regions, obs))>0),]
+
 
   # create time grouping variable
   if (is.null(time_group)) {
@@ -389,8 +389,7 @@ get_hotspots <- function(
                                res = res,
                                factor = 1,
                                coast = coast)
-      (my_hr$ud * nrow(tt))/terra::cellSize(my_hr, unit = area_unit)
-
+      (my_hr$ud * nrow(tt))/terra::cellSize(my_hr, unit = 'km')
     })
 
     rd <- terra::rast(rd)
@@ -401,29 +400,25 @@ get_hotspots <- function(
   })
 
   m <- terra::sprc(out)
-
-  if (output == 'all_rast') return(m)
   m <- terra::mosaic(m, fun = sum_stat)
-  if (output == 'summary_rast') return(m)
+  if (output == 'raster') return(m)
 
   #convert to  polygon classes
   mc <-suppressWarnings(hs_class(r = m, lvl = lev, donuts = donuts))
 
   if (summaries == T) {
-    my_ext <- terra::ext(obs)[1:4] # extent for UD
-    br <- terra::rast(ext = my_ext, res = res, crs = terra::crs(obs)) # template raster
-    tt <- terra::rasterize(obs, br, fun = 'sum', by = 'tg', background = 0)
-    ex <- terra::extract(tt, mc, fun = 'sum', na.rm = T, exact = T, ID = F)
 
-    #mc$surveys <- ncol(ex)
-    mc$max_cnt <- round(apply(ex, 1, max))
-    mc$mean_cnt <- round(apply(ex, 1, mean))
-    mc$surv_cnt <- round(apply(ex, 1, function(x) sum(x>0)))
-    mc$area_km2 <- as.numeric(units::set_units(sf::st_area(mc), km^2))
-
+    ms <- lapply(unique(obs$tg), function(y) {
+      lengths(sf::st_intersects(mc, obs |> dplyr::filter(tg == y)))
+    })
+    ms <- do.call(cbind, ms)
+    mc$max_cnt <- round(apply(ms, 1, max))
+    mc$mean_cnt <- round(apply(ms, 1, mean))
+    mc$area_km2 <- round(as.numeric(units::set_units(sf::st_area(mc), km^2)), 2)
+    mc$num_occ <- round(apply(ms>0, 1, sum))
 
     mc <- mc |>
-      dplyr::select(class, area_km2, mean_cnt, max_cnt, yrs_obs)
+      dplyr::select(class, area_km2, mean_cnt, max_cnt, num_occ)
   }
   return(mc)
 }

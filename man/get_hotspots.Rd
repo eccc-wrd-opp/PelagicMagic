@@ -14,10 +14,9 @@ get_hotspots(
   sum_stat = c("max", "mean", "median")[1],
   lev = c(1, 10, 100, 1000, 10000),
   buffer_points = 10000,
-  area_unit = c("km", "m")[1],
   donuts = T,
   summaries = T,
-  output = c("polygons", "summary_rast", "all_rast")[1]
+  output = c("polygons", "raster")[1]
 )
 }
 \arguments{
@@ -39,8 +38,6 @@ get_hotspots(
 
 \item{buffer_points}{Distance to buffer points when creating study area polygon if regions argument is NULL.}
 
-\item{area_unit}{Unit of measurement for area calculations, one of 'km' or 'm'.}
-
 \item{donuts}{Logical. Should higher level polygons be erased from lower level polygons to create donuts.}
 
 \item{summaries}{Logical. Should summaries of bird observations within each polygon be returned.}
@@ -48,7 +45,7 @@ get_hotspots(
 \item{output}{Should the function return summary polygons, summary rasters or all weighted utlization rasters, one of 'polygons', 'summary_rast', or 'all_rast'.}
 }
 \value{
-An sf POLYGONS object showing hotspots
+An sf POLYGONS object showing hotspots or a spatRaster
 }
 \description{
 Identify hot spots from aerial census data
@@ -63,8 +60,8 @@ Continuous outputs from the rasters can be converted into polygons by classifyin
 observations according to the breakpoints in lev. This creates a smoothed polygon
 representing areas with weighted utlization distribution values within each class.
 Polygons can be converted to donuts with higher levels of expected distribution
-removed from lower level polygons. Summaries are provided for the size of the polygons, and the
-mean and max counts observed within polygons and the number of surveys conducted of that area.
+removed from lower level polygons. Summaries are provided for the area of the polygons (area_km2), the
+mean (mean_cnt) and max counts (max_cnt) observed, and the number of survey periods with birds observed (num_occ).
 }
 \examples{
 # format data
@@ -102,7 +99,6 @@ hs <- get_hotspots(
   sum_stat = c('max','mean','median')[1],
   lev = c(1, 10, 100, 1000, 10000),
   buffer_points = 10000,
-  area_unit = c('km','m')[1],
   donuts = T,
   summaries = T
 )
