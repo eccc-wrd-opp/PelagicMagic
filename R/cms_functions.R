@@ -2,53 +2,97 @@
 
 # make_cms_envir ----------------------------------------------------------
 
-# Create a python environment with the copernicusmarine toolbox installed
+# Create a conda python environment with the copernicusmarine toolbox installed
 
-#' Create a Python virtual environment with copernicusmarine toolbox installed
+#' Create a conda python environment with copernicusmarine toolbox installed
 #'
-#' @param my_env The name of, or path to, a Python virtual environment. If this
-#' name contains any slashes, the name will be interpreted as a path; if the name
-#' does not contain slashes, it will be treated as a virtual environment within virtualenv_root().
-#' When NULL, the virtual environment as specified by the RETICULATE_PYTHON_ENV
-#' environment variable will be used instead. To refer to a virtual environment
-#' in the current working directory, you can prefix the path with ⁠./<name>⁠.
+#' @param my_env Desired folder name for a conda python environment that will contain the Copernicus Marine Toolbox. String. Default is 'cms_env', creates 'r-miniconda/envs/cms_env'.
 #' @param version Python version to use. String. Default is '3.11'.
 #' @param user User name for copernicus marine service. String.
 #' @param password Password for copernicus marine service. String.
 #'
-#' @details This function uses reticulate to create a Python virtual environment
+#' @details This function uses reticulate to create a conda environment
 #' and install the copernicusmarine toolbox. This environment can then be used to download
 #' oceanographic data from Copernicus Marine Service.
 #'
 #' If the function is run including the user name and password then login details
 #' will be saved to the virtual environment on creation.
 #'
-#' @return Creates a python virtual environment with the copernicusmarine toolbox installed on the path specified by my_env
+#' @return Creates a conda python environment with the copernicusmarine toolbox installed on the path specified by my_env
 #' @export
 #'
 #' @examples
 #'
 #' # not run
 #' if (FALSE) {
-#' cm_env <- './tmp/cms_env'
+#' cm_env <- 'cms_env'
 #' make_cms_envir(my_env = cm_env)
-#' reticulate::use_virtualenv(paste0(cm_env,'/'), required = TRUE)
+#' reticulate::use_condaenv(my_env, required = TRUE)
 #' cm <- reticulate::import("copernicusmarine")
 #' }
 #'
-make_cms_envir <- function(my_env, version = '3.11.9', user = NULL, password = NULL) {
-  if (reticulate::virtualenv_exists(my_env) == F) {
-    tt <- reticulate::install_python(version = version, list = FALSE, optimized = TRUE, force = FALSE)
-    Sys.setenv('RETICULATE_PYTHON_FALLBACK'=tt)
-    reticulate::virtualenv_create(envname = my_env, ignore_installed = FALSE)
-    reticulate::virtualenv_install(envname = my_env, packages = c("copernicusmarine"))
+make_cms_envir <- function(my_env = 'cms_env', version = '3.11.9', user = NULL, password = NULL) {
 
-  } else message(paste('Python environment already exists at:', my_env))
+  # Load reticulate or install it if missing
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    install.packages("reticulate")
+    library(reticulate)
+  }
 
-  if (!is.null(user) & !is.null(password)) {
-    reticulate::use_virtualenv(paste0(my_env,'/'), required = TRUE)
+  ## Support with miniconda installation
+
+  # Define the path to conda.bat inside the r-miniconda folder
+  conda_path <- file.path(Sys.getenv("LOCALAPPDATA"), "r-miniconda", "condabin", "conda.bat")
+
+  if (!file.exists(conda_path)) {
+    message("Miniconda is not installed.")
+    message("Please open your command prompt and enter the following commands one by one:")
+    message("")
+    message(paste0(conda_path, " tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main"))
+    message(paste0(conda_path, " tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r"))
+    message(paste0(conda_path, " tos accept --override-channels --channel https://repo.anaconda.com/pkgs/msys2"))
+    message("")
+
+    response <- readline(prompt = "Have you run these commands in the command prompt? (y/n): ")
+    if (tolower(response) != "y") {
+      message("Please run the commands before proceeding. Exiting.")
+      return(invisible(FALSE))
+    }
+
+    message("Installing Miniconda now...")
+    reticulate::install_miniconda()
+    message("Miniconda installation complete.")
+    return(invisible(TRUE))
+
+  } else {
+    message("Miniconda appears to be installed.")
+    return(invisible(TRUE))
+  }
+
+  ## Set up conda environment
+
+  if (Sys.getenv("RETICULATE_MINICONDA_PATH") == "") {
+    Sys.setenv(RETICULATE_MINICONDA_PATH = reticulate::miniconda_path())
+  }
+
+  if (!my_env %in% reticulate::conda_list()$name) {
+    message("Creating new conda environment: ", my_env)
+    reticulate::conda_create(envname = my_env, python_version = version)
+    reticulate::conda_install(envname = my_env, packages = "copernicusmarine", pip = TRUE)
+  } else {
+    message("Conda environment already exists: ", my_env)
+  }
+
+  # Activate the conda environment
+  reticulate::use_condaenv(my_env, required = TRUE)
+
+  # Use login if provided
+  if (!is.null(user) && !is.null(password)) {
+    message("Logging in to Copernicus Marine using provided credentials...")
     cm <- reticulate::import("copernicusmarine")
     cm$login(user, password)
+  } else {
+    message("No Copernicus Marine credentials provided. Skipping login.")
   }
 }
 
@@ -56,7 +100,7 @@ make_cms_envir <- function(my_env, version = '3.11.9', user = NULL, password = N
 
 #' Download subsetted data from Copernicus Marine Service (CMS)
 #'
-#' @param my_env Path to a virtual python environment containing the Copernicus Marine Toolbox
+#' @param my_env Folder name of the conda python environment containing the Copernicus Marine Toolbox. String. Default 'cms_env', interpreted as 'r-miniconda/envs/cms_env'.
 #' @param out_dir File path to the directory where raster will be saved. String.
 #' @param var Variable name to be downloaded from CMS
 #' @param prod CMS product ID
@@ -83,8 +127,8 @@ make_cms_envir <- function(my_env, version = '3.11.9', user = NULL, password = N
 #' so this function requests data from the correct datasets for the temporal extent requested.
 #' If the request covers multiple datasets, then a netcdf will be saved for each dataset.
 #'
-#' Before running this function for the first time you will need to create a Python
-#' virtual environment with the copernicus marine toolbox installed. This can be
+#' Before running this function for the first time you will need to create a
+#' conda environment with the copernicus marine toolbox installed. This can be
 #' done using the get_cms_env() function. This environment could be saved outside
 #' of an R project and called by any project that requires CMS data.
 #'
@@ -115,7 +159,7 @@ make_cms_envir <- function(my_env, version = '3.11.9', user = NULL, password = N
 
 
 get_cms_data <- function(
-    my_env,
+    my_env = 'cms_env',
     out_dir,
     var = 'thetao',
     prod = 'cmems_mod_glo_phy_hindcast',
@@ -128,7 +172,9 @@ get_cms_data <- function(
     overwrite = FALSE
 ) {
 
-  reticulate::use_virtualenv(paste0(my_env,'/'), required = F)
+  # Activate the conda environment
+  reticulate::use_condaenv(my_env, required = F)
+
   cm <- reticulate::import("copernicusmarine")
 
   if (!(prod %in% cms_table$prod)) stop(paste(prod, 'not in the included datasets, check cms_table'))
