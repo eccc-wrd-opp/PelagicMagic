@@ -35,11 +35,11 @@ thetao,monthly,cmems_mod_glo_phy_forecast,cmems_mod_glo_phy-thetao_anfc_0.083deg
 uo,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_my_0.083deg_P1M-m,cmems_mod_glo_phy1_hc,1/1/1993,6/1/2021
 uo,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_myint_0.083deg_P1M-m,cmems_mod_glo_phy2_hc,7/1/2021,
 uo,monthly,cmems_mod_glo_phy_forecast,cmems_mod_glo_phy-cur_anfc_0.083deg_P1M-m,cmems_mod_glo_phy3_fc,1/1/2024,
-vo,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_my_0.083deg_P1M-m,cmems_mod_glo_phy1_hc,1/1/1993,6/1/2021
-vo,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_myint_0.083deg_P1M-m,cmems_mod_glo_phy2_hc,7/1/2021,
+vo,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_my_0.083deg_P1M-m,cmems_mod_glo_phy1_hc,1/1/1993,5/31/2026
+vo,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_myint_0.083deg_P1M-m,cmems_mod_glo_phy2_hc,6/1/2026,
 vo,monthly,cmems_mod_glo_phy_forecast,cmems_mod_glo_phy-cur_anfc_0.083deg_P1M-m,cmems_mod_glo_phy3_fc,1/1/2024,
-zos,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_my_0.083deg_P1M-m,cmems_mod_glo_phy1_hc,1/1/1993,6/1/2021
-zos,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_myint_0.083deg_P1M-m,cmems_mod_glo_phy2_hc,7/1/2021,
+zos,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_my_0.083deg_P1M-m,cmems_mod_glo_phy1_hc,1/1/1993,5/31/2026
+zos,monthly,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_myint_0.083deg_P1M-m,cmems_mod_glo_phy2_hc,6/1/2026,
 zos,monthly,cmems_mod_glo_phy_forecast,cmems_mod_glo_phy_anfc_0.083deg_P1M-m,cmems_mod_glo_phy3_fc,1/1/2024,
 deptho,static,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_anfc_0.083deg_static,cmems_mod_glo_phy,,
 mask,static,cmems_mod_glo_phy_hindcast,cmems_mod_glo_phy_anfc_0.083deg_static,cmems_mod_glo_phy,,
